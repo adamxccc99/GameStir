@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAMESTIR - Free Online & PC Games Portal</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              200: '#bae0fd',
+              500: '#0088ff',
+              600: '#0066cc',
+              700: '#004da3',
+              dark: '#0f172a',
+              card: '#1e293b',
+              accent: '#ff2a5f'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0088ff;
+    }
+
+    /* Y8-style compact grid layout */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    @media (min-width: 768px) {
+      .game-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 14px;
+      }
+    }
+
+    /* Card Glow and Hover */
+    .y8-card {
+      transition: all 0.2s ease-in-out;
+    }
+    .y8-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px -4px rgba(0, 136, 255, 0.4);
+    }
+
+    /* Shimmer effect for skeleton loading */
+    .shimmer {
+      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* Hide horizontal scrollbars */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-2.5">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+      
+      <!-- LOGO & BRANDING -->
+      <a href="#" onclick="filterByCategory('all'); return false;" class="flex items-center gap-3 group shrink-0">
+        <!-- SVG Handheld Console Logo -->
+        <div class="w-10 h-10 bg-slate-800 border border-brand-500/50 rounded-xl flex items-center justify-center shadow-lg group-hover:border-brand-500 transition-all">
+          <svg class="w-7 h-7 text-brand-500 group-hover:text-blue-400 transition-colors" viewBox="0 0 100 100" fill="currentColor">
+            <rect x="20" y="10" width="60" height="38" rx="4" fill="none" stroke="currentColor" stroke-width="7"/>
+            <rect x="28" y="18" width="44" height="22" rx="2" fill="currentColor" opacity="0.3"/>
+            <rect x="20" y="52" width="60" height="38" rx="6" stroke="currentColor" stroke-width="7" fill="none"/>
+            <path d="M 32 65 H 42 M 37 60 V 70" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="68" cy="65" r="5" fill="currentColor"/>
+            <circle cx="58" cy="73" r="3.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <!-- GAMESTIR Typography -->
+        <div class="flex flex-col">
+          <span class="text-2xl font-black tracking-wider uppercase leading-none font-mono">
+            <span class="text-brand-500 group-hover:text-blue-400 transition-colors">GAME</span><span class="text-white">ST</span><span class="text-sky-400">IR</span>
+          </span>
+          <span class="text-[10px] tracking-widest text-slate-400 font-semibold uppercase">Play Instant Games</span>
+        </div>
+      </a>
+
+      <!-- SEARCH BAR -->
+      <div class="flex-1 max-w-xl relative">
+        <div class="relative flex items-center">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-slate-400 text-sm"></i>
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="Search 1,000+ free online games..." 
+            oninput="handleSearch(this.value)"
+            class="w-full bg-slate-800 border border-slate-700/80 focus:border-brand-500 text-sm rounded-full pl-10 pr-10 py-2 text-slate-200 placeholder-slate-400 outline-none transition-all shadow-inner"
+          >
+          <button id="clear-search" onclick="clearSearch()" class="hidden absolute right-3.5 text-slate-400 hover:text-white text-xs">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- HEADER ACTIONS -->
+      <div class="flex items-center gap-2">
+        <button onclick="filterByCategory('pc')" class="px-3 py-2 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-md">
+          <i class="fa-solid fa-desktop"></i>
+          <span class="hidden sm:inline">PC Games</span>
+        </button>
+        <button id="fav-filter-btn" onclick="toggleFavoritesView()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700">
+          <i class="fa-solid fa-heart text-brand-accent"></i>
+          <span class="hidden sm:inline">Favorites</span>
+          <span id="fav-count" class="bg-brand-accent text-white px-1.5 py-0.5 rounded-full text-[10px]">0</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <div class="max-w-[1600px] mx-auto w-full flex-1 flex flex-col md:flex-row gap-4 p-4">
+
+    <!-- CATEGORY SIDEBAR -->
+    <aside class="w-full md:w-52 shrink-0 flex flex-col gap-3">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-md">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 px-2 flex items-center justify-between">
+          <span>Categories</span>
+          <i class="fa-solid fa-layer-group text-brand-500"></i>
+        </h2>
+        
+        <nav id="category-list" class="flex md:flex-col gap-1 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+          <!-- Dynamic category buttons -->
+        </nav>
+      </div>
+
+      <!-- STREAMING DISCLAIMER BOX -->
+      <div class="bg-amber-950/40 border border-amber-600/30 rounded-xl p-3 text-xs text-amber-200/80">
+        <div class="flex items-center gap-2 font-bold text-amber-400 mb-1">
+          <i class="fa-solid fa-triangle-exclamation"></i> External Notice
+        </div>
+        <p class="text-[11px] leading-relaxed">
+          Streamed & PC games are embedded from external providers. GAMESTIR is not responsible for external content or hosting.
+        </p>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col gap-4 min-w-0">
+
+      <!-- CATEGORY HEADER BANNER -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between shadow-md">
+        <div>
+          <h1 id="catalog-title" class="text-xl font-black text-white flex items-center gap-2">
+            <i class="fa-solid fa-gamepad text-brand-500"></i> All Arcade Games
+          </h1>
+          <p id="catalog-subtitle" class="text-xs text-slate-400 mt-0.5">Explore over 1,000 free instant games</p>
+        </div>
+        <span id="game-count-badge" class="bg-brand-500/20 text-brand-500 border border-brand-500/30 text-xs font-bold px-3 py-1 rounded-full">
+          0 Games
+        </span>
+      </div>
+
+      <!-- PC GAMES DISCLAIMER BANNER (Visible on PC Games view) -->
+      <div id="pc-disclaimer-banner" class="hidden bg-amber-900/30 border border-amber-500/50 rounded-xl p-4 text-xs text-amber-200">
+        <div class="flex items-center gap-2 font-bold text-amber-400 text-sm mb-1">
+          <i class="fa-solid fa-circle-info"></i> Third-Party PC & Console Streaming Notice
+        </div>
+        <p class="leading-relaxed text-[12px]">
+          <strong>Notice:</strong> The games in this section (such as GTA V, Resident Evil 4, and Mario Kart 64) are streamed directly from external third-party websites (<code class="bg-slate-950 px-1 py-0.5 rounded text-amber-300">fiveplay.lol</code>, <code class="bg-slate-950 px-1 py-0.5 rounded text-amber-300">residentevil4.online</code>, <code class="bg-slate-950 px-1 py-0.5 rounded text-amber-300">mk64js.gokart.games</code>). GAMESTIR is not responsible for their hosting, maintenance, safety, or external content.
+        </p>
+      </div>
+
+      <!-- GAME GRID -->
+      <section id="game-grid" class="game-grid">
+        <!-- Skeleton Loaders -->
+        <template id="skeleton-template">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shimmer flex flex-col h-44">
+            <div class="h-28 w-full"></div>
+            <div class="p-2 space-y-2 flex-1">
+              <div class="h-3 bg-slate-700/50 rounded w-3/4"></div>
+              <div class="h-2.5 bg-slate-700/30 rounded w-1/2"></div>
+            </div>
+          </div>
+        </template>
+      </section>
+
+      <!-- LOAD MORE BUTTON -->
+      <div id="load-more-container" class="hidden justify-center py-4">
+        <button onclick="loadMoreGames()" class="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl shadow-lg transition-all flex items-center gap-2">
+          <i class="fa-solid fa-arrows-rotate"></i> Load More Games (<span id="loaded-count">0</span>/<span id="total-count">0</span>)
+        </button>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div id="empty-state" class="hidden flex-col items-center justify-center py-16 bg-slate-900/50 border border-dashed border-slate-800 rounded-xl text-center">
+        <i class="fa-solid fa-ghost text-4xl text-slate-600 mb-3"></i>
+        <h3 class="text-base font-bold text-slate-300">No games found</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm">Try searching for something else or switch categories.</p>
+        <button onclick="filterByCategory('all')" class="mt-4 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-lg transition-colors">
+          Show All Games
+        </button>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- THEATER GAME PLAYER MODAL -->
+  <div id="game-modal" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-md flex-col overflow-y-auto">
+    <!-- Player Top Bar -->
+    <div class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <button onclick="closeGameModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg flex items-center gap-2 border border-slate-700 transition-colors">
+          <i class="fa-solid fa-arrow-left"></i> Back to Catalog
+        </button>
+        <h2 id="modal-game-title" class="text-sm md:text-base font-bold text-white truncate max-w-xs md:max-w-md">Game Title</h2>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="modal-fav-btn" onclick="toggleFavoriteCurrent()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition-colors border border-slate-700">
+          <i class="fa-regular fa-heart text-brand-accent"></i>
+        </button>
+        <button onclick="toggleIframeFullscreen()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition-colors border border-slate-700" title="Fullscreen Game">
+          <i class="fa-solid fa-expand"></i>
+        </button>
+        <button onclick="closeGameModal()" class="p-2 bg-brand-accent/20 hover:bg-brand-accent text-brand-accent hover:text-white rounded-lg text-xs font-bold transition-colors">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div class="flex-1 flex flex-col lg:flex-row max-w-[1600px] w-full mx-auto p-2 md:p-4 gap-4">
+      
+      <!-- Frame Wrapper -->
+      <div class="flex-1 flex flex-col bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl min-h-[500px] lg:min-h-[650px] relative">
+        <iframe id="game-iframe" class="w-full h-full flex-1 border-0" allow="autoplay; fullscreen; keyboard" src=""></iframe>
+      </div>
+
+      <!-- Sidebar Recommendations -->
+      <div class="w-full lg:w-80 shrink-0 flex flex-col gap-3">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+            <span>More Games</span>
+            <i class="fa-solid fa-fire text-brand-accent"></i>
+          </h3>
+          <div id="modal-recommendations" class="grid grid-cols-2 lg:grid-cols-1 gap-2.5 max-h-[550px] overflow-y-auto pr-1">
+            <!-- Sidebar cards -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="mt-auto bg-slate-900 border-t border-slate-800 py-6 px-4 text-center text-xs text-slate-500">
+    <div class="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-300">GAMESTIR</span> &copy; 2026 — Play Free Online Arcade & PC Games
+      </div>
+      <div class="text-[11px] text-slate-500 max-w-xl">
+        <strong>Notice:</strong> Streamed third-party games are hosted on external domain sites. GAMESTIR is not responsible for external content or availability.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // GLOBAL STATE
+    let allGames = [];
+    let filteredGames = [];
+    let displayedCount = 30; // Pagination batch
+    const BATCH_SIZE = 30;
+
+    let currentCategory = 'all';
+    let searchQuery = '';
+    let favoriteIds = JSON.parse(localStorage.getItem('gamestir_favs') || '[]');
+    let currentActiveGame = null;
+    let showingFavoritesOnly = false;
+
+    // CUSTOM PC STREAMED GAMES
+    const CUSTOM_PC_GAMES = [
+      {
+        id: 'pc-gta5',
+        title: 'Grand Theft Auto V (Stream)',
+        url: 'https://fiveplay.lol/',
+        image: 'https://placehold.co/300x200/0f172a/0088ff?text=GTA+V',
+        category: 'pc',
+        rating: '4.9',
+        plays: '980K'
+      },
+      {
+        id: 'pc-re4',
+        title: 'Resident Evil 4 (Stream)',
+        url: 'https://residentevil4.online',
+        image: 'https://placehold.co/300x200/0f172a/ff2a5f?text=Resident+Evil+4',
+        category: 'pc',
+        rating: '4.8',
+        plays: '620K'
+      },
+      {
+        id: 'pc-mk64',
+        title: 'Mario Kart 64 (Emulated)',
+        url: 'https://mk64js.gokart.games',
+        image: 'https://placehold.co/300x200/0f172a/38bdf8?text=Mario+Kart+64',
+        category: 'pc',
+        rating: '4.9',
+        plays: '850K'
+      }
+    ];
+
+    const CATEGORIES = [
+      { id: 'all', label: 'All Games', icon: 'fa-gamepad' },
+      { id: 'pc', label: 'PC & Streamed', icon: 'fa-desktop' },
+      { id: 'action', label: 'Action', icon: 'fa-burst' },
+      { id: 'arcade', label: 'Arcade', icon: 'fa-ghost' },
+      { id: 'driving', label: 'Racing & Cars', icon: 'fa-car-side' },
+      { id: 'puzzle', label: 'Puzzle', icon: 'fa-puzzle-piece' },
+      { id: 'shooting', label: 'Shooter', icon: 'fa-crosshair' },
+      { id: 'sports', label: 'Sports', icon: 'fa-futbol' },
+      { id: 'casual', label: 'Casual & Kids', icon: 'fa-face-smile' }
+    ];
+
+    // INITIALIZATION
+    window.onload = function() {
+      renderCategoryList();
+      showSkeletons();
+      fetch1000Games();
+      updateFavCount();
+    };
+
+    // RENDER CATEGORIES
+    function renderCategoryList() {
+      const container = document.getElementById('category-list');
+      container.innerHTML = CATEGORIES.map(cat => `
+        <button 
+          onclick="filterByCategory('${cat.id}')" 
+          id="cat-btn-${cat.id}"
+          class="cat-btn flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${cat.id === 'all' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}"
+        >
+          <i class="fa-solid ${cat.icon} w-4 text-center"></i>
+          <span>${cat.label}</span>
+        </button>
+      `).join('');
+    }
+
+    // SHOW SKELETON LOADERS
+    function showSkeletons() {
+      const grid = document.getElementById('game-grid');
+      const template = document.getElementById('skeleton-template').innerHTML;
+      grid.innerHTML = Array(18).fill(template).join('');
+    }
+
+    // FETCH 1,000 GAMES FROM GAMEPIX
+    function fetch1000Games() {
+      fetch('https://games.gamepix.com/games?sid=1&limit=1000&order=q')
+        .then(res => res.json())
+        .then(res => {
+          if (res && res.data) {
+            const apiGames = res.data.map(game => ({
+              id: game.id || game.url,
+              title: game.title,
+              url: game.url,
+              image: game.thumbnailUrl || game.bannerUrl,
+              category: mapCategory(game.category || game.genre || ''),
+              rating: (4 + Math.random() * 0.9).toFixed(1),
+              plays: Math.floor(Math.random() * 850 + 150) + 'K'
+            }));
+
+            // Combine PC streamed games with API games
+            allGames = [...CUSTOM_PC_GAMES, ...apiGames];
+            applyFilters();
+          }
+        })
+        .catch(err => {
+          console.error("API Fetch Error:", err);
+          allGames = [...CUSTOM_PC_GAMES];
+          applyFilters();
+        });
+    }
+
+    // CATEGORY MAPPING
+    function mapCategory(rawCat) {
+      const cat = (rawCat || '').toLowerCase();
+      if (cat.includes('action') || cat.includes('fight')) return 'action';
+      if (cat.includes('car') || cat.includes('driv') || cat.includes('race')) return 'driving';
+      if (cat.includes('puzz') || cat.includes('card') || cat.includes('logic')) return 'puzzle';
+      if (cat.includes('shoot') || cat.includes('gun')) return 'shooting';
+      if (cat.includes('sport') || cat.includes('ball')) return 'sports';
+      if (cat.includes('kids') || cat.includes('girl') || cat.includes('fun')) return 'casual';
+      return 'arcade';
+    }
+
+    // CATEGORY FILTER
+    function filterByCategory(catId) {
+      currentCategory = catId;
+      showingFavoritesOnly = false;
+      displayedCount = BATCH_SIZE; // Reset pagination
+      
+      // Toggle category button active styles
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-500', 'text-white', 'shadow-md');
+        btn.classList.add('text-slate-400', 'hover:bg-slate-800', 'hover:text-slate-200');
+      });
+      const activeBtn = document.getElementById(`cat-btn-${catId}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400', 'hover:bg-slate-800', 'hover:text-slate-200');
+        activeBtn.classList.add('bg-brand-500', 'text-white', 'shadow-md');
+      }
+
+      const catObj = CATEGORIES.find(c => c.id === catId);
+      document.getElementById('catalog-title').innerHTML = `<i class="fa-solid ${catObj ? catObj.icon : 'fa-gamepad'} text-brand-500"></i> ${catObj ? catObj.label : 'Games'}`;
+      document.getElementById('catalog-subtitle').innerText = catId === 'all' ? 'Explore all 1,000+ featured games' : `Top rated ${catObj ? catObj.label : ''} titles`;
+
+      // Show disclaimer banner if PC Games tab selected
+      const pcBanner = document.getElementById('pc-disclaimer-banner');
+      if (catId === 'pc') {
+        pcBanner.classList.remove('hidden');
+      } else {
+        pcBanner.classList.add('hidden');
+      }
+
+      applyFilters();
+    }
+
+    // SEARCH
+    function handleSearch(val) {
+      searchQuery = val.trim().toLowerCase();
+      displayedCount = BATCH_SIZE;
+      document.getElementById('clear-search').classList.toggle('hidden', searchQuery === '');
+      applyFilters();
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      handleSearch('');
+    }
+
+    // FAVORITES VIEW
+    function toggleFavoritesView() {
+      showingFavoritesOnly = !showingFavoritesOnly;
+      displayedCount = BATCH_SIZE;
+      const favBtn = document.getElementById('fav-filter-btn');
+      
+      if (showingFavoritesOnly) {
+        favBtn.classList.add('bg-brand-accent', 'text-white');
+        document.getElementById('catalog-title').innerHTML = `<i class="fa-solid fa-heart text-brand-accent"></i> Favorite Games`;
+        document.getElementById('catalog-subtitle').innerText = 'Your saved games list';
+      } else {
+        favBtn.classList.remove('bg-brand-accent', 'text-white');
+        filterByCategory(currentCategory);
+        return;
+      }
+      applyFilters();
+    }
+
+    // APPLY FILTERS & PAGINATION
+    function applyFilters() {
+      filteredGames = allGames.filter(game => {
+        const matchesCategory = (currentCategory === 'all' || game.category === currentCategory);
+        const matchesSearch = searchQuery === '' || game.title.toLowerCase().includes(searchQuery) || game.category.toLowerCase().includes(searchQuery);
+        const matchesFav = !showingFavoritesOnly || favoriteIds.includes(game.id);
+
+        return matchesCategory && matchesSearch && matchesFav;
+      });
+
+      renderGameGrid();
+    }
+
+    // LOAD MORE PAGINATION
+    function loadMoreGames() {
+      displayedCount += BATCH_SIZE;
+      renderGameGrid();
+    }
+
+    // RENDER GAME GRID
+    function renderGameGrid() {
+      const grid = document.getElementById('game-grid');
+      const emptyState = document.getElementById('empty-state');
+      const countBadge = document.getElementById('game-count-badge');
+      const loadMoreContainer = document.getElementById('load-more-container');
+
+      countBadge.innerText = `${filteredGames.length} Games`;
+
+      if (filteredGames.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+        loadMoreContainer.classList.add('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      emptyState.classList.remove('flex');
+
+      // Slice games for pagination
+      const visibleGames = filteredGames.slice(0, displayedCount);
+
+      grid.innerHTML = visibleGames.map(game => {
+        const isFav = favoriteIds.includes(game.id);
+        const isPcGame = game.category === 'pc';
+
+        return `
+          <div 
+            onclick="openGameModal('${game.id}')"
+            class="y8-card bg-slate-900 border ${isPcGame ? 'border-amber-500/50' : 'border-slate-800'} rounded-xl overflow-hidden cursor-pointer group flex flex-col relative"
+          >
+            <!-- Thumbnail container -->
+            <div class="relative h-32 w-full overflow-hidden bg-slate-950">
+              <img 
+                src="${game.image}" 
+                alt="${game.title}" 
+                loading="lazy"
+                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                onerror="this.src='https://placehold.co/300x200/0f172a/0088ff?text=GAMESTIR'"
+              >
+              <!-- Hover Overlay -->
+              <div class="absolute inset-0 bg-brand-500/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div class="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
+                  <i class="fa-solid fa-play ml-0.5"></i>
+                </div>
+              </div>
+              <!-- Rating Badge -->
+              <div class="absolute top-1.5 left-1.5 bg-black/80 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold text-yellow-400 flex items-center gap-1">
+                <i class="fa-solid fa-star text-[9px]"></i> ${game.rating}
+              </div>
+              ${isPcGame ? `
+                <div class="absolute top-1.5 right-1.5 bg-amber-500 text-black px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">
+                  STREAMED
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-2.5 flex-1 flex flex-col justify-between">
+              <h3 class="text-xs font-bold text-slate-100 truncate group-hover:text-brand-500 transition-colors">${game.title}</h3>
+              <div class="flex items-center justify-between mt-2 text-[10px] text-slate-400 font-medium">
+                <span class="capitalize bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700/50">${game.category}</span>
+                <span class="flex items-center gap-1"><i class="fa-solid fa-eye text-slate-500"></i> ${game.plays}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Handle Load More Button Visibility
+      if (displayedCount < filteredGames.length) {
+        loadMoreContainer.classList.remove('hidden');
+        loadMoreContainer.classList.add('flex');
+        document.getElementById('loaded-count').innerText = visibleGames.length;
+        document.getElementById('total-count').innerText = filteredGames.length;
+      } else {
+        loadMoreContainer.classList.add('hidden');
+      }
+    }
+
+    // GAME MODAL / THEATER MODE
+    function openGameModal(gameId) {
+      const game = allGames.find(g => g.id == gameId);
+      if (!game) return;
+
+      currentActiveGame = game;
+      document.getElementById('modal-game-title').innerText = game.title;
+      document.getElementById('game-iframe').src = game.url;
+
+      updateModalFavBtn();
+      renderModalRecommendations(game);
+
+      const modal = document.getElementById('game-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeGameModal() {
+      const modal = document.getElementById('game-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.getElementById('game-iframe').src = '';
+      document.body.style.overflow = 'auto';
+      currentActiveGame = null;
+    }
+
+    function renderModalRecommendations(current) {
+      const recs = allGames.filter(g => g.id !== current.id).slice(0, 8);
+      const container = document.getElementById('modal-recommendations');
+
+      container.innerHTML = recs.map(game => `
+        <div onclick="openGameModal('${game.id}')" class="flex gap-2 p-1.5 bg-slate-800/80 hover:bg-slate-800 rounded-lg cursor-pointer border border-slate-700/50 transition-colors">
+          <img src="${game.image}" class="w-14 h-12 rounded object-cover" alt="${game.title}">
+          <div class="flex-1 min-w-0 flex flex-col justify-center">
+            <h4 class="text-xs font-bold text-slate-200 truncate">${game.title}</h4>
+            <span class="text-[10px] text-slate-400 capitalize">${game.category}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // FAVORITES SYSTEM
+    function toggleFavoriteCurrent() {
+      if (!currentActiveGame) return;
+      const id = currentActiveGame.id;
+      const index = favoriteIds.indexOf(id);
+
+      if (index > -1) {
+        favoriteIds.splice(index, 1);
+      } else {
+        favoriteIds.push(id);
+      }
+
+      localStorage.setItem('gamestir_favs', JSON.stringify(favoriteIds));
+      updateFavCount();
+      updateModalFavBtn();
+      if (showingFavoritesOnly) applyFilters();
+    }
+
+    function updateModalFavBtn() {
+      if (!currentActiveGame) return;
+      const isFav = favoriteIds.includes(currentActiveGame.id);
+      const btn = document.getElementById('modal-fav-btn');
+      btn.innerHTML = `<i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart text-brand-accent"></i>`;
+    }
+
+    function updateFavCount() {
+      document.getElementById('fav-count').innerText = favoriteIds.length;
+    }
+
+    // FULLSCREEN UTILS
+    function toggleIframeFullscreen() {
+      const iframe = document.getElementById('game-iframe');
+      if (iframe.requestFullscreen) {
+        iframe.requestFullscreen();
+      } else if (iframe.webkitRequestFullscreen) {
+        iframe.webkitRequestFullscreen();
+      }
+    }
+  </script>
+</body>
+</html>
